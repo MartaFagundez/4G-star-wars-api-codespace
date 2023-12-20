@@ -138,6 +138,121 @@ def get_favorites_by_user(user_id):
     return jsonify(response_body), 200
 
 
+@app.route('/favorites/planets', methods=['POST'])
+def add_favorite_planet():
+    request_body = request.get_json(silent=True)
+
+    # Chequear si la petición trajo datos en el body
+    if request_body is not None: 
+        print("Incoming request with the following body", request_body)
+    else:
+        return jsonify({"msg": f"Error: la petición no incluye datos en el body"}), 400
+
+    # Chequear si el body trae los datos correctos del usuario
+    if request_body.get('user_id') is not None:
+        user_query = User.query.get(request_body['user_id'])
+
+        if user_query is None:
+            return jsonify({"msg": f"El usuario con id {request_body['user_id']} no existe."}), 400
+        
+    else:
+        return jsonify({"msg": f"Error: el body de la petición no incluye la propiedad user_id"}), 400
+    
+    # Chequear si el body trae los datos correctos del planeta
+    if request_body.get('planet_id') is not None:
+        planet_query = Character.query.get(request_body['planet_id'])
+
+        if planet_query is None:
+            return jsonify({"msg": f"El planeta con id {request_body['planet_id']} no existe."}), 400
+        
+    else:
+        return jsonify({"msg": f"Error: el body de la petición no incluye la propiedad planet_id"}), 400
+     
+    # Crear el diccionario con los datos de la petición
+    favorite_planet = FavoritePlanet()
+    favorite_planet.user_id = request_body['user_id']
+    favorite_planet.planet_id = request_body['planet_id']
+    # Insertar un registro mediante el diccionario
+    db.session.add(favorite_planet)
+    # Guardar los cambios realizados en la BD
+    db.session.commit()
+
+    # Devolver al frontend la lista de favoritos del usuario actualizada
+    favorite_characters_query = FavoriteCharacter.query.filter_by(user_id = request_body['user_id'])
+    serialized_favorite_characters = list(map(lambda item: item.serialize()['character'], favorite_characters_query))
+
+    favorite_planets_query = FavoritePlanet.query.filter_by(user_id = request_body['user_id'])
+    serialized_favorite_planets = list(map(lambda item: item.serialize()['planet'], favorite_planets_query))
+
+    response_body = {
+        "msg": "ok",
+        "total_favorites": len(serialized_favorite_characters) + len(serialized_favorite_planets),
+        "result": {
+            "favorite_characters": serialized_favorite_characters,
+            "favorite_planets": serialized_favorite_planets
+        }
+    }
+
+    return jsonify(response_body), 200
+
+
+@app.route('/favorites/characters', methods=['POST'])
+def add_favorite_character():
+    request_body = request.get_json(silent=True)
+
+    # Chequear si la petición trajo datos en el body
+    if request_body is not None: 
+        print("Incoming request with the following body", request_body)
+    else:
+        return jsonify({"msg": f"Error: la petición no incluye datos en el body"}), 400
+
+    # Chequear si el body trae los datos correctos del usuario
+    if request_body.get('user_id') is not None:
+        user_query = User.query.get(request_body['user_id'])
+
+        if user_query is None:
+            return jsonify({"msg": f"El usuario con id {request_body['user_id']} no existe."}), 400
+        
+    else:
+        return jsonify({"msg": f"Error: el body de la petición no incluye la propiedad user_id"}), 400
+    
+    # Chequear si el body trae los datos correctos del personaje
+    if request_body.get('character_id') is not None:
+        character_query = Character.query.get(request_body['character_id'])
+
+        if character_query is None:
+            return jsonify({"msg": f"El personaje con id {request_body['character_id']} no existe."}), 400
+        
+    else:
+        return jsonify({"msg": f"Error: el body de la petición no incluye la propiedad character_id"}), 400
+     
+    # Crear el diccionario con los datos de la petición
+    favorite_character = FavoriteCharacter()
+    favorite_character.user_id = request_body['user_id']
+    favorite_character.character_id = request_body['character_id']
+    # Insertar un registro mediante el diccionario
+    db.session.add(favorite_character)
+    # Guardar los cambios realizados en la BD
+    db.session.commit()
+
+    # Devolver al frontend la lista de favoritos del usuario actualizada
+    favorite_characters_query = FavoriteCharacter.query.filter_by(user_id = request_body['user_id'])
+    serialized_favorite_characters = list(map(lambda item: item.serialize()['character'], favorite_characters_query))
+
+    favorite_planets_query = FavoritePlanet.query.filter_by(user_id = request_body['user_id'])
+    serialized_favorite_planets = list(map(lambda item: item.serialize()['planet'], favorite_planets_query))
+
+    response_body = {
+        "msg": "ok",
+        "total_favorites": len(serialized_favorite_characters) + len(serialized_favorite_planets),
+        "result": {
+            "favorite_characters": serialized_favorite_characters,
+            "favorite_planets": serialized_favorite_planets
+        }
+    }
+
+    return jsonify(response_body), 200
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
